@@ -1,0 +1,40 @@
+import numpy as np
+import time
+from lithops.multiprocessing import Pool
+from lithops import FunctionExecutor
+
+a=[]
+
+for i in range(0,100):
+ a.append(np.random.randint(1,100,size=(10,10)))
+
+def serial(z):
+ result = []
+ start_time = time.time()
+ for i in range(0,100):    
+  result.append(np.linalg.eigh(z[i])) #calculate eigen values and append to result list
+ end_time = time.time()
+ print("Single process took :", end_time - start_time, "seconds")
+
+
+def caleigen(c):  
+ result = []        
+ result.append(np.linalg.eigh(c)) #calculate eigenvalues and append to result list
+ return result
+
+def mp(x):
+ start_time = time.time()
+ with Pool(processes=x) as pool:  # start a pool of 4 workers
+  result = pool.map_async(caleigen,a)   # distribute work to workers
+  result = result.get() # collect result from MapResult object
+ end_time = time.time()
+ print("Mutltiprocessing took:", end_time - start_time, "seconds, with a pool of ", x, " workers" )
+
+if __name__ == "__main__":
+ fexec = FunctionExecutor()
+ f0 = fexec.call_async(serial, a)
+ print(f0.result())
+ mp(1)
+ mp(2)
+ mp(3)
+ mp(4)
